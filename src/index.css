@@ -1,0 +1,21 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-neon: #39ff14;
+  --color-neon-hover: #32e011;
+  --color-neon-dark: #1f8007;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+body {
+  background-color: #050505; /* Deep black */
+  color: #f5f5f5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Hide scrollbar for clean app-like look */
+::-webkit-scrollbar {
+  display: none;
+}
+
