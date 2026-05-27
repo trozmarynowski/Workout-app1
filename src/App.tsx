@@ -119,7 +119,7 @@ export default function App() {
         
         {screen === 'exercises' && (
           <div key="exercises">
-            <ExerciseDatabase />
+            <ExerciseDatabase workouts={workouts} />
           </div>
         )}
         
