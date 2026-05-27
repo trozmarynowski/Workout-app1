@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { CATEGORIES, EXERCISES } from '../data';
-import { Exercise, Workout } from '../types';
+import { Exercise, Workout, MuscleGroup } from '../types';
 import { Search, X, ChevronDown, Plus, BarChart2, Calendar, Dumbbell } from 'lucide-react';
-import { formatDate } from '../utils';
+import { formatDate, generateId } from '../utils';
 
 interface ExerciseDatabaseProps {
   onSelectExercise?: (exercise: Exercise) => void;
@@ -16,6 +16,22 @@ export function ExerciseDatabase({ onSelectExercise, selectionMode = false, onCa
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedCategories, setExpandedCategories] = useState<string[]>(CATEGORIES.map(c => c.name));
   const [selectedStatsExercise, setSelectedStatsExercise] = useState<Exercise | null>(null);
+  const [showAddCustom, setShowAddCustom] = useState(false);
+  const [customName, setCustomName] = useState('');
+  const [customMuscleGroup, setCustomMuscleGroup] = useState<MuscleGroup>('Klatka piersiowa');
+  const [customImage, setCustomImage] = useState('');
+  const [internalCustomExercises, setInternalCustomExercises] = useState<Exercise[]>([]);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('wt_custom_exercises');
+      if (saved) {
+        setInternalCustomExercises(JSON.parse(saved));
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }, []);
 
   const toggleCategory = (categoryName: string) => {
     setExpandedCategories(prev =>
@@ -67,9 +83,29 @@ export function ExerciseDatabase({ onSelectExercise, selectionMode = false, onCa
     return { maxWeight, maxReps, maxVolume, recentWorkouts, totalTimes: sorted.filter(w => w.exercises.some(e => e.exercise.id === exerciseId && e.sets.some(s => s.completed))).length };
   };
 
+  const handleAddCustom = () => {
+    if (!customName.trim()) return;
+    const newEx: Exercise = {
+      id: generateId(),
+      name: customName.trim(),
+      muscleGroup: customMuscleGroup,
+      image: customImage.trim() || undefined
+    };
+    
+    const newCustom = [...internalCustomExercises, newEx];
+    setInternalCustomExercises(newCustom);
+    localStorage.setItem('wt_custom_exercises', JSON.stringify(newCustom));
+    
+    setCustomName('');
+    setCustomImage('');
+    setShowAddCustom(false);
+  };
+
+  const allExercises = [...EXERCISES, ...internalCustomExercises];
+
   // Group exercises by category
   const exercisesByCategory = CATEGORIES.map(cat => {
-    const exercises = EXERCISES.filter(ex => 
+    const exercises = allExercises.filter(ex => 
       ex.muscleGroup === cat.name && 
       (searchQuery === '' || ex.name.toLowerCase().includes(searchQuery.toLowerCase()))
     );
@@ -92,11 +128,19 @@ export function ExerciseDatabase({ onSelectExercise, selectionMode = false, onCa
               <h1 className="text-3xl font-bold text-white tracking-tight">Baza ćwiczeń</h1>
             )}
           </div>
-          {selectionMode && onCancel && (
-            <button onClick={onCancel} className="p-2 bg-neutral-900 rounded-full text-neutral-400 hover:text-white">
-              <X size={20} />
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => setShowAddCustom(true)}
+              className="px-3 py-1.5 bg-neon/10 text-neon font-bold text-xs uppercase tracking-wider rounded-lg border border-neon/30 hover:bg-neon hover:text-black transition-colors flex items-center gap-1"
+            >
+              <Plus size={14} /> Własne
             </button>
-          )}
+            {selectionMode && onCancel && (
+              <button onClick={onCancel} className="p-2 bg-neutral-900 rounded-full text-neutral-400 hover:text-white">
+                <X size={20} />
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="relative mb-6">
@@ -197,6 +241,87 @@ export function ExerciseDatabase({ onSelectExercise, selectionMode = false, onCa
           )}
         </div>
       </motion.div>
+
+      {/* Add Custom Exercise Modal */}
+      <AnimatePresence>
+        {showAddCustom && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[110] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+          >
+            <motion.div 
+              initial={{ scale: 0.95, y: 10 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 10 }}
+              className="bg-neutral-900 border border-neutral-800 rounded-2xl w-full max-w-md overflow-hidden flex flex-col"
+            >
+              <div className="flex items-center justify-between p-4 border-b border-neutral-800">
+                <h2 className="text-xl font-bold text-white">Nowe ćwiczenie</h2>
+                <button 
+                  onClick={() => setShowAddCustom(false)} 
+                  className="p-1.5 bg-neutral-800 rounded-full text-neutral-400 hover:text-white"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+              
+              <div className="p-4 space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-neutral-500 uppercase tracking-wider mb-1.5 ml-1">Nazwa</label>
+                  <input 
+                    type="text" 
+                    value={customName}
+                    onChange={e => setCustomName(e.target.value)}
+                    placeholder="np. Wyciskanie hantli siedząc"
+                    className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-white placeholder-neutral-600 focus:outline-none focus:border-neon/50 focus:ring-1 focus:ring-neon/50 transition-all font-medium"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-xs font-bold text-neutral-500 uppercase tracking-wider mb-1.5 ml-1">Partia mięśniowa</label>
+                  <div className="relative">
+                    <select
+                      value={customMuscleGroup}
+                      onChange={e => setCustomMuscleGroup(e.target.value as MuscleGroup)}
+                      className="w-full appearance-none bg-neutral-950 border border-neutral-800 rounded-xl pl-4 pr-10 py-3 text-white focus:outline-none focus:border-neon/50 focus:ring-1 focus:ring-neon/50 transition-all font-medium"
+                    >
+                      {CATEGORIES.map(cat => (
+                        <option key={cat.name} value={cat.name}>{cat.name}</option>
+                      ))}
+                    </select>
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none text-neutral-500">
+                      <ChevronDown size={18} />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-neutral-500 uppercase tracking-wider mb-1.5 ml-1">Zdjecie/Miniaturka (URL, Opcjonalnie)</label>
+                  <input 
+                    type="text" 
+                    value={customImage}
+                    onChange={e => setCustomImage(e.target.value)}
+                    placeholder="https://..."
+                    className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-white placeholder-neutral-600 focus:outline-none focus:border-neon/50 focus:ring-1 focus:ring-neon/50 transition-all text-sm"
+                  />
+                </div>
+              </div>
+              
+              <div className="p-4 bg-neutral-950/50 border-t border-neutral-800">
+                <button
+                  onClick={handleAddCustom}
+                  disabled={!customName.trim()}
+                  className="w-full bg-neon text-black font-bold uppercase tracking-wider py-3.5 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#32e011] transition-colors"
+                >
+                  Dodaj
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Stats Modal */}
       <AnimatePresence>
