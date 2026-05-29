@@ -269,10 +269,11 @@ export function WorkoutActive({ workout, pastWorkouts = [], onUpdateWorkout, onF
 
               <div className="space-y-2">
                 <div className="flex text-[10px] uppercase font-bold text-neutral-500 tracking-wider px-2 mb-1">
-                  <div className="w-10 text-center">Seria</div>
+                  <div className="w-8 text-center">Seria</div>
                   <div className="flex-1 text-center">kg</div>
                   <div className="flex-1 text-center">Powt.</div>
-                  <div className="w-12 text-center"><Check size={14} className="mx-auto" /></div>
+                  <div className="w-10 text-center"><Check size={14} className="mx-auto" /></div>
+                  <div className="w-8"></div>
                 </div>
 
                 <AnimatePresence>
@@ -282,13 +283,11 @@ export function WorkoutActive({ workout, pastWorkouts = [], onUpdateWorkout, onF
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}
                       exit={{ opacity: 0, height: 0 }}
-                      className={`flex items-center gap-2 rounded-lg p-1.5 transition-colors ${set.completed ? 'bg-neon/10 border border-neon/20' : 'bg-neutral-950/50 border border-neutral-800'}`}
+                      className={`flex items-center gap-1.5 rounded-lg p-1.5 transition-colors ${set.completed ? 'bg-neon/10 border border-neon/20' : 'bg-neutral-950/50 border border-neutral-800'}`}
                     >
-                      <div className="w-10 text-center focus-within:w-16 flex items-center justify-center">
-                        {/* Make the number slightly subtle, or red delete if hovered */}
-                        <div className="text-neutral-500 font-mono text-sm relative group cursor-pointer" onClick={() => handleRemoveSet(we.id, set.id)}>
-                          <span className="group-hover:hidden">{setIdx + 1}</span>
-                          <X size={14} className="hidden group-hover:block text-red-500" />
+                      <div className="w-8 text-center flex items-center justify-center">
+                        <div className="text-neutral-500 font-mono text-sm">
+                          {setIdx + 1}
                         </div>
                       </div>
                       <div className="flex-1 relative">
@@ -311,7 +310,7 @@ export function WorkoutActive({ workout, pastWorkouts = [], onUpdateWorkout, onF
                           className="w-full bg-neutral-900 disabled:bg-transparent disabled:text-neutral-300 text-center py-2.5 rounded-lg text-white font-mono focus:outline-none focus:ring-1 focus:ring-neon transition-all"
                         />
                       </div>
-                      <div className="w-12 flex justify-center">
+                      <div className="w-10 flex justify-center">
                         <motion.button 
                           whileTap={{ scale: 0.9 }}
                           onClick={() => handleToggleSet(we.id, set.id)}
@@ -329,6 +328,20 @@ export function WorkoutActive({ workout, pastWorkouts = [], onUpdateWorkout, onF
                             <Check size={18} strokeWidth={2} />
                           )}
                         </motion.button>
+                      </div>
+                      <div className="w-8 flex justify-center">
+                        {!set.completed && (
+                          <button
+                            onClick={() => {
+                              if (window.confirm('Usunąć tę serię?')) {
+                                handleRemoveSet(we.id, set.id);
+                              }
+                            }}
+                            className="w-8 h-8 rounded-lg flex items-center justify-center text-neutral-500 hover:text-red-500 hover:bg-red-500/10 transition-colors"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        )}
                       </div>
                     </motion.div>
                   ))}
